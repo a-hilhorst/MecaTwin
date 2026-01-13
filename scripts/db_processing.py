@@ -14,7 +14,7 @@ from src.db_core_analysis import copy_database_if_not_exists, create_df_from_fea
 from src.db_core_analysis import create_sfe_df, perform_cross_validation
 from src.db_core_analysis import update_composition, update_lattice_parameter, update_matminer_features
 from src.db_core_analysis import update_mech_param, update_defmech
-from src.db_core_analysis import update_gibbs_tcpython, update_mixing_enthalpy, update_interface_energy
+from src.db_core_analysis import update_gibbs_tcpython, update_interface_energy
 from src.db_core_analysis import extrapol_sfe_models, extrapol_sfe_gibbs
 
 
@@ -63,11 +63,10 @@ def main(
         update_mech_param()
         update_defmech()
         if thermo_modeling:
-            update_gibbs_tcpython(input_gibbs='df_equilibria_with_gibbs1.pkl')
-            update_gibbs_tcpython(input_gibbs='df_equilibria_with_gibbs2.pkl')
-            update_gibbs_tcpython(input_gibbs='df_equilibria_with_gibbs3.pkl')
-            update_interface_energy(input_interface='df_interfaceE20250729_300.pkl')
-            update_mixing_enthalpy()
+            update_gibbs_tcpython(input_gibbs='data/df_equilibria_with_gibbs1.pkl')
+            update_gibbs_tcpython(input_gibbs='data/df_equilibria_with_gibbs2.pkl')
+            update_gibbs_tcpython(input_gibbs='data/df_equilibria_with_gibbs3.pkl')
+            update_interface_energy(input_interface='data/df_interfaceE20250729_300.pkl')
             update_lattice_parameter()
         t1 = perf_counter()
         print('Elapsed time for updating database: ', t1 - t0)
@@ -79,7 +78,7 @@ def main(
 
     if extrapol_sfe_cv:
         '''extrapolates to myDatabase_ext.json'''
-        copy_database_if_not_exists("myDatabase_dev.json", "myDatabase_ext.json")
+        copy_database_if_not_exists("data/data_dev.json", "data/data_ext.json")
 
         '''Model hyperparameter cross validation'''
         model_cv()

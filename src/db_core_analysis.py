@@ -820,7 +820,7 @@ def get_nested(item, field_path, default=None):
 
 
 def create_df_from_feature_set(
-        feature_set, source="myDatabase_ext.json", export_to_csv=False, export_to_pkl=False):
+        feature_set, source="data/data_ext.json", export_to_csv=False, export_to_pkl=False):
     """
     Creates a dataframe containing the subset based on feature conditions
 
@@ -853,7 +853,7 @@ def create_df_from_feature_set(
     return df
 
 
-def create_sfe_df(source="myDatabase_dev.json", composition_key='composition_at',
+def create_sfe_df(source="data/data_dev.json", composition_key='composition_at',
                   is_featurized=False, sfe_upper_bound=None,
                   export_to_csv=False, export_to_pkl=False):
     """
@@ -900,7 +900,7 @@ def create_sfe_df(source="myDatabase_dev.json", composition_key='composition_at'
 # ============================
 # Data-processing
 # ============================
-def update_composition(source_db_ori="myDatabase.json", source_db_dev="myDatabase_dev.json"):
+def update_composition(source_db_ori="data/data_raw.json", source_db_dev="data/data_dev.json"):
     """
     Adds or fills in the compositions in wt.% and in at.% to the dev database
 
@@ -963,7 +963,7 @@ def update_composition(source_db_ori="myDatabase.json", source_db_dev="myDatabas
                 db_dev.update({'composition': composition_wt_update}, doc_ids=[item.doc_id])
 
 
-def update_matminer_features(source="myDatabase_dev.json"):
+def update_matminer_features(source="data/data_dev.json"):
     """
     Adds MATMINER features to all entries of the database
 
@@ -995,7 +995,7 @@ def update_matminer_features(source="myDatabase_dev.json"):
         db.update({'matminer_features': features}, doc_ids=[doc_id])
 
 
-def update_mech_param(source_db_ori="myDatabase.json", source_db_dev="myDatabase_dev.json"):
+def update_mech_param(source_db_ori="data/data_raw.json", source_db_dev="data/data_dev.json"):
     """
     Computes engineering and true tensile properties
 
@@ -1132,7 +1132,7 @@ def add_serrated_yielding_bool():
     Goes through each entry of the source db to manually add serrated_yielding to mechanical_param.
 
     """
-    source_db_ori = "myDatabase.json"
+    source_db_ori = "data/data_raw.json"
     db_ori = TinyDB(source_db_ori)
 
     entries_to_update = db_ori.all()
@@ -1160,7 +1160,7 @@ def add_serrated_yielding_bool():
             db_ori.update({'mechanical_param': mechanical_param_update}, doc_ids=[item.doc_id])
 
 
-def update_defmech(source_db="myDatabase_dev.json"):
+def update_defmech(source_db="data/data_dev.json"):
     """
     Goes through each entry of the source db to manually add is_twip, is_trip_epsilon, and is_trip_alpha to
     mechanical_param.
@@ -1206,7 +1206,7 @@ def update_defmech(source_db="myDatabase_dev.json"):
     save_df.to_pickle('df_deformation_mech_backup.pkl')
 
 
-def update_gibbs_tcpython(input_gibbs='df_equilibria_with_gibbs.pkl', source_db="myDatabase_dev.json"):
+def update_gibbs_tcpython(input_gibbs='data/df_equilibria_with_gibbs.pkl', source_db="data/data_dev.json"):
     """
     Reads the TC-python outputs to update the database with Gibbs energy of phases FCC, BCC, and HCP as well as the
     differences in energies between FCC and HCP, FCC and BCC, and HCP and BCC
@@ -1233,37 +1233,7 @@ def update_gibbs_tcpython(input_gibbs='df_equilibria_with_gibbs.pkl', source_db=
         db.update({'thermodynamic_param': thermodynamic_para_update}, doc_ids=[doc_id])
 
 
-def update_mixing_enthalpy(source_db="myDatabase_dev.json"):
-    """
-    Updates the database with the mixing enthalpy using Omegas as described in "A map of single-phase high-entropy
-    alloys", Chen W., Hilhorst A., Bokas G., Gorsse S., Jacques P.J., Hautier G. (doi.org/10.1038/s41467-023-38423-7)
-
-    """
-    db = TinyDB(source_db)
-
-    with open('omegas.json') as f:
-        omegas = json.load(f)
-
-    entries = db.all()
-    for item in entries:
-        elts = item['composition_at'].keys()
-
-        if ("C" in elts) or ("N" in elts):
-            h_mix = float('nan')
-        else:
-            h_mix = 0.0
-            for comb in itertools.combinations(elts, 2):
-                h_mix += (omegas['omegas']['FCC']['-'.join(sorted(comb))] *
-                          item['composition_at'][comb[0]] *
-                          item['composition_at'][comb[1]])
-
-        thermodynamic_para_update = item['thermodynamic_param']
-        thermodynamic_para_update['Hmix'] = h_mix
-
-        db.update({'thermodynamic_param': thermodynamic_para_update}, doc_ids=[item.doc_id])
-
-
-def update_interface_energy(input_interface='df_interfaceE20250729_300.pkl', source_db="myDatabase_dev.json"):
+def update_interface_energy(input_interface='data/df_interfaceE20250729_300.pkl', source_db="data/data_dev.json"):
     df_interface = pd.read_pickle(input_interface)
     db = TinyDB(source_db)
 
@@ -1279,7 +1249,7 @@ def update_interface_energy(input_interface='df_interfaceE20250729_300.pkl', sou
         db.update({'thermodynamic_param': thermodynamic_para_update}, doc_ids=[doc_id])
 
 
-def update_lattice_parameter(source_db="myDatabase_dev.json"):
+def update_lattice_parameter(source_db="data/data_dev.json"):
     db_ext = TinyDB(source_db)
     entries = db_ext.all()
 
@@ -1300,7 +1270,7 @@ def update_lattice_parameter(source_db="myDatabase_dev.json"):
         db_ext.update({'thermodynamic_param': thermodynamic_para_update}, doc_ids=[item.doc_id])
 
 
-def extrapol_sfe_models(model_str_list, df_list, isfe_str_list, destination="myDatabase_ext.json"):
+def extrapol_sfe_models(model_str_list, df_list, isfe_str_list, destination="data/data_ext.json"):
     """
     Computes the SFE based on composition using a given model
 
@@ -1335,7 +1305,7 @@ def extrapol_sfe_models(model_str_list, df_list, isfe_str_list, destination="myD
         db_ext.update({'thermodynamic_param': thermodynamic_para_update}, doc_ids=[item.doc_id])
 
 
-def extrapol_sfe_gibbs(destination="myDatabase_ext.json"):
+def extrapol_sfe_gibbs(destination="data/data_ext.json"):
     """
     Computes the SFE based on a thermodynamic description
 
